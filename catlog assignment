@@ -1,0 +1,71 @@
+import org.json.JSONObject;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
+public class ShamirSecretSharing {
+
+    public static void main(String[] args) throws IOException {
+        // Test case 1
+        String inputFilePath1 = "testcase1.json";
+        double constantC1 = computeConstantTerm(inputFilePath1);
+        System.out.println("The constant term 'c' for Test Case 1 is: " + constantC1);
+
+        // Test case 2
+        String inputFilePath2 = "testcase2.json";
+        double constantC2 = computeConstantTerm(inputFilePath2);
+        System.out.println("The constant term 'c' for Test Case 2 is: " + constantC2);
+    }
+
+    public static double computeConstantTerm(String inputFilePath) throws IOException {
+        // Read JSON input from a file
+        String content = new String(Files.readAllBytes(Paths.get(inputFilePath)));
+        JSONObject data = new JSONObject(content);
+
+        // Parse k value
+        int k = data.getJSONObject("keys").getInt("k");
+
+        // Extract and decode x and y values
+        int[] xValues = new int[k];
+        double[] yValues = new double[k];
+
+        int index = 0;
+        for (int i = 1; index < k; i++) {
+            if (data.has(String.valueOf(i))) {
+                String baseStr = data.getJSONObject(String.valueOf(i)).getString("base");
+                String valueStr = data.getJSONObject(String.valueOf(i)).getString("value");
+                int base = Integer.parseInt(baseStr);
+
+                xValues[index] = i;
+                yValues[index] = decodeValue(base, valueStr);
+                index++;
+            }
+        }
+
+        // Find the constant term using Lagrange Interpolation
+        return lagrangeInterpolation(xValues, yValues);
+    }
+
+    // Decode value from a given base to decimal
+    public static int decodeValue(int base, String value) {
+        return Integer.parseInt(value, base);
+    }
+
+    // Lagrange Interpolation to find the constant term
+    public static double lagrangeInterpolation(int[] x, double[] y) {
+        int n = x.length;
+        double constant = 0;
+
+        for (int i = 0; i < n; i++) {
+            double term = y[i];
+            for (int j = 0; j < n; j++) {
+                if (i != j) {
+                    term *= (0.0 - x[j]) / (x[i] - x[j]);
+                }
+            }
+            constant += term;
+        }
+
+        return constant;
+    }
+}
